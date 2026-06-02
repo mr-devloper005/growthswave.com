@@ -7,17 +7,18 @@ const productKind = getProductKind(recipe)
 
 export const slot4BrandConfig = {
   siteName: siteIdentity.name,
-  tagline: siteIdentity.tagline,
+  tagline: 'Curated content with a luxury editorial finish',
   domain: siteIdentity.domain,
   baseUrl: siteIdentity.url,
   productKind,
   ogImage: siteIdentity.ogImage,
   accents:
     productKind === 'visual'
-      ? { primary: '#8df0c8', surface: '#07101f' }
+      ? { primary: '#fff8f0', surface: '#120d0c' }
       : productKind === 'editorial'
-        ? { primary: '#241711', surface: '#fbf6ee' }
+        ? { primary: '#4b2e2b', surface: '#fff8f0' }
         : productKind === 'directory'
-          ? { primary: '#0f172a', surface: '#f8fbff' }
-          : { primary: '#5b2b3b', surface: '#f7f1ea' },
+          ? { primary: '#4b2e2b', surface: '#fffdf9' }
+          : { primary: '#4b2e2b', surface: '#fff8f0' },
 } as const
+
