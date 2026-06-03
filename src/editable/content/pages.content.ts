@@ -36,7 +36,7 @@ export const pagesContent = {
         'Featured hero with strong hierarchy and quick actions.',
         'Multiple card styles to make the archive feel curated.',
         'Clean category handling with safe fallbacks for missing data.',
-        'Polished mobile stacking and scroll-friendly rails.',
+        
       ],
       primaryLink: { label: 'Open bookmarks', href: '/sbm' },
       secondaryLink: { label: 'Search resources', href: '/search' },
