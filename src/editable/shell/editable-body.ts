@@ -20,3 +20,4 @@ export function getEditableBodyProps(): EditableBodyProps {
     style: editableRootStyle,
   }
 }
+
