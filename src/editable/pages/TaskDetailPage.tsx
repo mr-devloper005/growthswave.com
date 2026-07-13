@@ -9,6 +9,8 @@ import type { SitePost } from '@/lib/site-connector'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
 import { getVisualPreset, visualSystem } from '@/editable/theme/visual-system'
 import { EditorialBadgeCard, CompactIndexCard, ArticleListCard } from '@/editable/cards/PostCards'
+import { cleanDisplayText, getDisplayTitle } from '@/editable/content/display-text'
+import { Ads } from '@/lib/ads'
 
 export const revalidate = 3
 
@@ -88,9 +90,9 @@ const formatPlainText = (raw: string) => {
     .join('')
 }
 
-const summaryText = (post: SitePost) => post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || ''
-const categoryOf = (post: SitePost, fallback: string) => asText(getContent(post).category) || post.tags?.[0] || fallback
-const normalizeText = (value: string) => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase()
+const summaryText = (post: SitePost) => cleanDisplayText(post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt))
+const categoryOf = (post: SitePost, fallback: string) => cleanDisplayText(asText(getContent(post).category) || post.tags?.[0]) || fallback
+const normalizeText = (value: string) => cleanDisplayText(value).toLowerCase()
 
 const mapSrcFor = (post: SitePost) => {
   const address = getField(post, ['address', 'location', 'city'])
@@ -112,7 +114,7 @@ export function TaskDetailView({ task, post, related, comments = [] }: { task: T
 
   return (
     <EditableSiteShell>
-      <main style={detailVars} className="bg-[var(--detail-bg)] text-[var(--detail-text)]">
+      <main style={detailVars} className="min-h-screen bg-[var(--detail-bg)] text-[var(--detail-text)]">
         {task === 'listing' ? <ListingDetail post={post} related={related} /> : null}
         {task === 'classified' ? <ClassifiedDetail post={post} related={related} /> : null}
         {task === 'image' ? <ImageDetail post={post} related={related} /> : null}
@@ -145,7 +147,7 @@ function ArticleDetail({ task, post, related, comments }: { task: TaskKey; post:
           <span className="rounded-full bg-[var(--detail-accent)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-white">{category}</span>
           {post.publishedAt ? <span className="text-xs font-black uppercase tracking-[0.18em] text-[var(--detail-text)]/55">{new Date(post.publishedAt).toLocaleDateString()}</span> : null}
         </div>
-        <h1 className="mt-4 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl lg:text-7xl">{post.title}</h1>
+        <h1 className="mt-4 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl lg:text-7xl">{getDisplayTitle(post)}</h1>
         {summaryText(post) ? <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--detail-text)]/72">{summaryText(post)}</p> : null}
         <div className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
           {images[0] ? <img src={images[0]} alt="" className="h-full min-h-[260px] w-full rounded-[2rem] object-cover" /> : <FallbackPanel icon={FileText} label="No featured image" />}
@@ -182,7 +184,7 @@ function ListingDetail({ post, related }: { post: SitePost; related: SitePost[] 
             </div>
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[var(--detail-accent)]">Business listing</p>
-              <h1 className="mt-3 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-6xl">{post.title}</h1>
+              <h1 className="mt-3 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-6xl">{getDisplayTitle(post)}</h1>
               <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--detail-text)]/72">{summaryText(post)}</p>
             </div>
           </div>
@@ -191,7 +193,7 @@ function ListingDetail({ post, related }: { post: SitePost; related: SitePost[] 
           <ImageStrip images={images.slice(1)} label="Business showcase" />
         </article>
         <aside className="space-y-5">
-          {mapSrc ? <MapBox src={mapSrc} label={address || post.title} /> : <ContactAction website={website} phone={phone} email={email} />}
+          {mapSrc ? <MapBox src={mapSrc} label={address || getDisplayTitle(post)} /> : <ContactAction website={website} phone={phone} email={email} />}
           {mapSrc ? <ContactAction website={website} phone={phone} email={email} /> : null}
           <RelatedPanel task="listing" post={post} related={related} compact />
         </aside>
@@ -213,7 +215,7 @@ function ClassifiedDetail({ post, related }: { post: SitePost; related: SitePost
       <aside className="rounded-[2.4rem] border border-black/[0.08] bg-[var(--detail-text)] p-7 text-[var(--detail-bg)] shadow-[0_24px_80px_rgba(75,46,43,0.18)] lg:sticky lg:top-24 lg:self-start">
         <BackLink task="classified" />
         <p className="mt-10 text-[11px] font-black uppercase tracking-[0.28em] opacity-60">Classified notice</p>
-        <h1 className="mt-4 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl">{post.title}</h1>
+        <h1 className="mt-4 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl">{getDisplayTitle(post)}</h1>
         <div className="mt-8 grid gap-3">
           {price ? <BadgeLine label="Price" value={price} /> : null}
           {condition ? <BadgeLine label="Condition" value={condition} /> : null}
@@ -244,7 +246,7 @@ function ImageDetail({ post, related }: { post: SitePost; related: SitePost[] })
           <div className="inline-flex items-center gap-2 rounded-full bg-[var(--detail-text)] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-[var(--detail-bg)]">
             <Camera className="h-4 w-4" /> Image story
           </div>
-          <h1 className="mt-6 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl">{post.title}</h1>
+          <h1 className="mt-6 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl">{getDisplayTitle(post)}</h1>
           <p className="mt-5 text-base leading-8 text-[var(--detail-text)]/72">{summaryText(post)}</p>
           <BodyContent post={post} compact />
         </aside>
@@ -264,37 +266,76 @@ function ImageDetail({ post, related }: { post: SitePost; related: SitePost[] })
   )
 }
 
-function BookmarkDetail({ post }: { post: SitePost; related: SitePost[] }) {
+function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
   const summary = summaryText(post)
   const body = getBody(post)
   const showBody = normalizeText(body) && normalizeText(body) !== normalizeText(summary)
+  const category = categoryOf(post, 'Bookmark')
   return (
-    <section className="mx-auto max-w-[1180px] px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-      <article className="overflow-hidden rounded-[2.8rem] border border-black/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,248,240,0.98))] shadow-[0_24px_80px_rgba(75,46,43,0.10)]">
-        <div className="border-b border-black/[0.06] px-6 py-6 sm:px-10 sm:py-8">
-          <BackLink task="sbm" />
+    <section>
+      <div className="relative overflow-hidden border-b border-black/[0.06] bg-[var(--slot4-cream)]">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-[-8%] top-[-15%] h-[340px] w-[340px] rounded-full bg-[rgba(192,133,82,0.18)] blur-3xl" />
+          <div className="absolute right-[-10%] top-[5%] h-[420px] w-[420px] rounded-full bg-[rgba(75,46,43,0.12)] blur-3xl" />
         </div>
-        <div className="px-6 py-8 sm:px-10 sm:py-12 lg:px-14">
-          <div className="max-w-4xl">
-            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--detail-accent)]"></p>
-            <h1 className="mt-5 text-4xl font-black leading-[0.95] tracking-[-0.08em] sm:text-5xl lg:text-7xl">{post.title}</h1>
-            {summary ? <p className="mt-6 text-base leading-8 text-[var(--detail-text)]/72 sm:text-lg sm:leading-9">{summary}</p> : null}
-          </div>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <section className="rounded-[2rem] border border-black/[0.08] bg-white/88 p-6 shadow-sm sm:p-8">
-              <h2 className="text-sm font-black uppercase tracking-[0.22em] text-[var(--detail-accent)]">Description</h2>
-              {showBody ? (
-                <div className="article-content mt-5 max-w-none text-base leading-8 text-[var(--detail-text)]/82" dangerouslySetInnerHTML={{ __html: formatPlainText(body) }} />
-              ) : (
-                <p className="mt-5 text-base leading-8 text-[var(--detail-text)]/72">No additional description is available for this bookmark yet.</p>
-              )}
-            </section>
+        <div className="relative mx-auto grid max-w-[1600px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] lg:px-8 lg:py-12">
+          <article className="rounded-[2.4rem] border border-black/[0.08] bg-white p-6 shadow-[0_24px_80px_rgba(75,46,43,0.08)] sm:p-8 lg:p-10">
+            <BackLink task="sbm" />
+            <div className="mt-8 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[var(--slot4-accent-soft)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--slot4-page-text)]">{category}</span>
+              {post.publishedAt ? <span className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--slot4-muted-text)]">{new Date(post.publishedAt).toLocaleDateString()}</span> : null}
+            </div>
+            <h1 className="mt-5 max-w-4xl text-4xl font-black leading-[0.94] tracking-[-0.08em] sm:text-6xl lg:text-7xl">{getDisplayTitle(post)}</h1>
+            {summary ? <p className="mt-6 max-w-3xl text-base leading-8 text-[var(--slot4-muted-text)] sm:text-lg sm:leading-9">{summary}</p> : null}
+          </article>
 
-            
+          <div className="grid content-start gap-6">
+            <aside className="flex min-h-[320px] flex-col justify-between overflow-hidden rounded-[2.4rem] border border-black/[0.08] bg-[var(--slot4-dark-bg)] p-7 text-white shadow-[0_26px_90px_rgba(75,46,43,0.18)] sm:p-9">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/65">Saved resource</p>
+                <h2 className="mt-4 text-3xl font-black leading-[1] tracking-[-0.06em]">A focused read from the {SITE_CONFIG.name} collection.</h2>
+              </div>
+              <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/10 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55">Type</p>
+                  <p className="mt-2 text-sm font-black">{category}</p>
+                </div>
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/10 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55">Collection</p>
+                  <p className="mt-2 text-sm font-black">Bookmarks</p>
+                </div>
+              </div>
+            </aside>
+            <div className="mx-auto w-full max-w-[300px]">
+              <Ads slot="sidebar" showLabel eager className="mx-auto w-full" />
+            </div>
           </div>
         </div>
-      </article>
+      </div>
+
+      <div className="border-b border-black/[0.06] bg-[linear-gradient(180deg,#fffaf5_0%,#fff4e8_100%)]">
+        <div className="mx-auto grid max-w-[1600px] gap-6 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8 lg:py-16">
+          <article className="rounded-[2.4rem] border border-black/[0.08] bg-white p-6 shadow-[0_18px_50px_rgba(75,46,43,0.08)] sm:p-8 lg:p-10">
+            <div className="flex items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[var(--slot4-accent)]">Resource notes</p>
+                <h2 className="mt-2 text-3xl font-black tracking-[-0.06em]">Description</h2>
+              </div>
+              <span className="hidden rounded-full bg-[var(--slot4-gray)] px-4 py-2 text-xs font-black text-[var(--slot4-muted-text)] sm:inline-flex">Curated bookmark</span>
+            </div>
+            {showBody ? (
+              <div className="article-content mt-7 max-w-none text-base leading-8 text-[var(--slot4-page-text)]/82 sm:text-lg sm:leading-9" dangerouslySetInnerHTML={{ __html: formatPlainText(body) }} />
+            ) : (
+              <div className="mt-7 rounded-[1.6rem] border border-dashed border-black/[0.08] bg-[var(--slot4-gray)] p-6 text-base leading-8 text-[var(--slot4-muted-text)]">
+                No additional description is available for this bookmark yet.
+              </div>
+            )}
+          </article>
+
+          <RelatedPanel task="sbm" post={post} related={related} />
+        </div>
+      </div>
     </section>
   )
 }
@@ -311,7 +352,7 @@ function PdfDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
           </div>
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[var(--detail-accent)]">PDF resource</p>
-            <h1 className="mt-3 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-6xl">{post.title}</h1>
+            <h1 className="mt-3 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-6xl">{getDisplayTitle(post)}</h1>
           </div>
         </div>
         <BodyContent post={post} />
@@ -323,7 +364,7 @@ function PdfDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
                 Download <Download className="h-4 w-4" />
               </Link>
             </div>
-            <iframe src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`} title={post.title} className="h-[78vh] w-full" />
+            <iframe src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0`} title={getDisplayTitle(post)} className="h-[78vh] w-full" />
           </div>
         ) : null}
       </article>
@@ -344,7 +385,7 @@ function ProfileDetail({ post, related }: { post: SitePost; related: SitePost[] 
         <div className="mx-auto mt-10 flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-[var(--detail-bg)] ring-1 ring-black/[0.08]">
           {images[0] ? <img src={images[0]} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-16 w-16 opacity-45" />}
         </div>
-        <h1 className="mt-6 text-4xl font-black leading-[0.96] tracking-[-0.08em]">{post.title}</h1>
+        <h1 className="mt-6 text-4xl font-black leading-[0.96] tracking-[-0.08em]">{getDisplayTitle(post)}</h1>
         {role ? <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-[var(--detail-accent)]">{role}</p> : null}
         <ContactAction website={website} email={email} />
       </aside>
@@ -509,6 +550,3 @@ function FallbackPanel({ icon: Icon, label }: { icon: any; label: string }) {
 function SparkIcon(props: any) {
   return <span {...props}>?</span>
 }
-
-
-
