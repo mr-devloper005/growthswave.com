@@ -11,6 +11,7 @@ import { taskPageVoices } from '@/editable/content/task-pages.content'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
 import { getVisualPreset, visualSystem } from '@/editable/theme/visual-system'
 import { ArticleListCard, CompactIndexCard, EditorialBadgeCard, EditorialFeatureCard, ImageFirstCard, getEditableCategory, getEditablePostImage } from '@/editable/cards/PostCards'
+import { cleanDisplayText, getDisplayTitle } from '@/editable/content/display-text'
 
 export const revalidate = 3
 
@@ -44,7 +45,7 @@ const getImages = (post: SitePost) => {
   return [...media, ...images, ...(isUrl(image) ? [image] : []), ...(isUrl(logo) ? [logo] : [])].filter(Boolean).slice(0, 8)
 }
 
-const getSummary = (post: SitePost) => post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || asText(getContent(post).body)
+const getSummary = (post: SitePost) => cleanDisplayText(post.summary || asText(getContent(post).description) || asText(getContent(post).excerpt) || asText(getContent(post).body))
 const getField = (post: SitePost, keys: string[]) => {
   const content = getContent(post)
   for (const key of keys) {
@@ -258,7 +259,7 @@ function ArticleArchiveCard({ post, href, index }: { post: SitePost; href: strin
       </div>
       <div className="p-5">
         <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[var(--archive-accent)]">Story {String(index + 1).padStart(2, '0')}</p>
-        <h2 className="mt-2 text-xl font-black leading-tight tracking-[-0.04em] text-[var(--archive-text)]">{post.title}</h2>
+        <h2 className="mt-2 text-xl font-black leading-tight tracking-[-0.04em] text-[var(--archive-text)]">{getDisplayTitle(post)}</h2>
         <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--archive-text)]/65">{getSummary(post)}</p>
       </div>
     </Link>
@@ -284,7 +285,7 @@ function ListingArchiveCard({ post, href }: { post: SitePost; href: string }) {
             </span>
           ) : null}
         </div>
-        <h2 className="mt-4 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{post.title}</h2>
+        <h2 className="mt-4 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{getDisplayTitle(post)}</h2>
         <p className="mt-3 line-clamp-2 text-sm leading-6 text-[var(--archive-text)]/65">{getSummary(post)}</p>
         <div className="mt-4 grid gap-2 text-xs font-bold text-[var(--archive-text)]/70 sm:grid-cols-2">
           {phone ? <span>Phone: {phone}</span> : null}
@@ -310,7 +311,7 @@ function ClassifiedArchiveCard({ post, href }: { post: SitePost; href: string })
           {image ? <img src={image} alt="" className="absolute bottom-4 right-4 h-20 w-20 rounded-2xl object-cover opacity-85" /> : null}
         </div>
         <div className="p-6">
-          <h2 className="text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{post.title}</h2>
+          <h2 className="text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{getDisplayTitle(post)}</h2>
           <p className="mt-4 line-clamp-4 text-sm leading-6 text-[var(--archive-text)]/65">{getSummary(post)}</p>
           <p className="mt-6 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--archive-accent)]">
             View listing <ArrowRight className="h-4 w-4" />
@@ -332,7 +333,7 @@ function ImageArchiveCard({ post, href, index }: { post: SitePost; href: string;
         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--archive-bg)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em]">
           <ImageIcon className="h-3 w-3" /> Visual
         </div>
-        <h2 className="mt-4 line-clamp-3 text-xl font-black leading-tight tracking-[-0.04em] text-[var(--archive-text)]">{post.title}</h2>
+        <h2 className="mt-4 line-clamp-3 text-xl font-black leading-tight tracking-[-0.04em] text-[var(--archive-text)]">{getDisplayTitle(post)}</h2>
       </div>
     </Link>
   )
@@ -342,7 +343,7 @@ function BookmarkArchiveCard({ post, href, index }: { post: SitePost; href: stri
   return (
     <Link href={href} className="group block rounded-[1.7rem] border border-black/[0.08] bg-white p-6 shadow-[0_18px_48px_rgba(75,46,43,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(75,46,43,0.14)]">
       <p className="text-[11px] font-black uppercase tracking-[0.26em] text-[var(--archive-accent)]">Bookmark {String(index + 1).padStart(2, '0')}</p>
-      <h2 className="mt-3 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{post.title}</h2>
+      <h2 className="mt-3 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{getDisplayTitle(post)}</h2>
       <p className="mt-4 line-clamp-4 text-sm leading-7 text-[var(--archive-text)]/68">{getSummary(post)}</p>
     </Link>
   )
@@ -358,7 +359,7 @@ function PdfArchiveCard({ post, href }: { post: SitePost; href: string }) {
         </div>
         <span className="rounded-full bg-[var(--archive-bg)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]">{category}</span>
       </div>
-      <h2 className="mt-8 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{post.title}</h2>
+      <h2 className="mt-8 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--archive-text)]">{getDisplayTitle(post)}</h2>
       <p className="mt-4 line-clamp-4 text-sm leading-6 text-[var(--archive-text)]/65">{getSummary(post)}</p>
       <p className="mt-6 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--archive-accent)]">
         Open document <Download className="h-4 w-4" />
@@ -375,14 +376,12 @@ function ProfileArchiveCard({ post, href }: { post: SitePost; href: string }) {
       <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[var(--archive-bg)] ring-1 ring-black/[0.08]">
         {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <UserRound className="h-10 w-10 opacity-45" />}
       </div>
-      <h2 className="mt-5 text-xl font-black leading-tight tracking-[-0.04em] text-[var(--archive-text)]">{post.title}</h2>
+      <h2 className="mt-5 text-xl font-black leading-tight tracking-[-0.04em] text-[var(--archive-text)]">{getDisplayTitle(post)}</h2>
       {role ? <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--archive-accent)]">{role}</p> : null}
       <p className="mt-4 line-clamp-3 text-sm leading-6 text-[var(--archive-text)]/65">{getSummary(post)}</p>
     </Link>
   )
 }
-
-
 
 
 

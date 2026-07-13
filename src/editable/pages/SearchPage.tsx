@@ -9,6 +9,7 @@ import { SITE_CONFIG, type TaskKey } from '@/lib/site-config'
 import type { SitePost } from '@/lib/site-connector'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
 import { pagesContent } from '@/editable/content/pages.content'
+import { cleanDisplayText, getDisplayTitle } from '@/editable/content/display-text'
 
 export const revalidate = 3
 
@@ -20,11 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
   })
 }
 
-const stripHtml = (value: string) => value.replace(/<[^>]*>/g, ' ')
-const compactText = (value: unknown) => (typeof value === 'string' ? stripHtml(value).replace(/\s+/g, ' ').trim().toLowerCase() : '')
+const compactText = (value: unknown) => cleanDisplayText(value).toLowerCase()
 const getContent = (post: SitePost) => (post.content && typeof post.content === 'object' ? (post.content as Record<string, unknown>) : {})
 const compactRaw = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
-const getSummary = (post: SitePost) => post.summary || compactRaw(getContent(post).description) || compactRaw(getContent(post).excerpt) || ''
+const getSummary = (post: SitePost) => cleanDisplayText(post.summary || compactRaw(getContent(post).description) || compactRaw(getContent(post).excerpt))
 
 const matches = (post: SitePost, query: string, category: string, task: string) => {
   const content = getContent(post)
@@ -48,7 +48,7 @@ function SearchResultCard({ post, index }: { post: SitePost; index: number }) {
   return (
     <Link href={href} className={`group block overflow-hidden rounded-[2rem] border border-black/[0.08] bg-white shadow-[0_18px_48px_rgba(75,46,43,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(75,46,43,0.14)] ${strong ? 'md:col-span-2' : ''}`}>
       <div className="p-5 sm:p-6">
-        <h2 className="mt-4 line-clamp-3 text-2xl font-black leading-[0.96] tracking-[-0.06em] text-[var(--slot4-page-text)]">{post.title}</h2>
+        <h2 className="mt-4 line-clamp-3 text-2xl font-black leading-[0.96] tracking-[-0.06em] text-[var(--slot4-page-text)]">{getDisplayTitle(post)}</h2>
         {summary ? <p className="mt-4 line-clamp-4 text-sm font-medium leading-7 text-[var(--slot4-page-text)]/65">{summary}</p> : null}
       </div>
     </Link>
