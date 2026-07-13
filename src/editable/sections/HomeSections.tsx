@@ -7,6 +7,7 @@ import type { TaskKey } from '@/lib/site-config'
 import { SITE_CONFIG } from '@/lib/site-config'
 import { pagesContent } from '@/editable/content/pages.content'
 import { editableDesignContract as dc } from '@/editable/layouts/design-contract'
+import { getDisplayTitle, truncateDisplayText } from '@/editable/content/display-text'
 import {
   ArticleListCard,
   CompactIndexCard,
@@ -32,8 +33,7 @@ function getExcerpt(post?: SitePost | null, limit = 130) {
     (typeof content.summary === 'string' && content.summary) ||
     post?.summary ||
     ''
-  const clean = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-  return clean.length > limit ? `${clean.slice(0, limit).trim()}...` : clean
+  return truncateDisplayText(raw, limit)
 }
 
 function taskLabel(task: TaskKey) {
@@ -69,7 +69,7 @@ function BookmarkRailTextCard({ post, href, index }: { post: SitePost; href: str
       className="block w-[240px] shrink-0 rounded-[1.6rem] border border-black/[0.08] bg-white p-4 shadow-[0_16px_40px_rgba(75,46,43,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(75,46,43,0.14)]"
     >
       <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--slot4-accent)]">Bookmark {String(index + 1).padStart(2, '0')}</p>
-      <h3 className="mt-3 line-clamp-2 text-lg font-black leading-tight tracking-[-0.04em] text-[var(--slot4-page-text)]">{post.title}</h3>
+      <h3 className="mt-3 line-clamp-2 text-lg font-black leading-tight tracking-[-0.04em] text-[var(--slot4-page-text)]">{getDisplayTitle(post)}</h3>
       <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--slot4-muted-text)]">{getExcerpt(post, 92)}</p>
     </Link>
   )
@@ -82,7 +82,7 @@ function BookmarkGridTextCard({ post, href, index }: { post: SitePost; href: str
       className="block rounded-[2rem] border border-black/[0.08] bg-white p-6 shadow-[0_18px_48px_rgba(75,46,43,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(75,46,43,0.14)]"
     >
       <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--slot4-accent)]">Bookmark {String(index + 1).padStart(2, '0')}</p>
-      <h3 className="mt-4 line-clamp-3 text-[2rem] font-black leading-[1] tracking-[-0.06em] text-[var(--slot4-page-text)]">{post.title}</h3>
+      <h3 className="mt-4 line-clamp-3 text-[2rem] font-black leading-[1] tracking-[-0.06em] text-[var(--slot4-page-text)]">{getDisplayTitle(post)}</h3>
       <p className="mt-4 line-clamp-4 text-sm leading-7 text-[var(--slot4-muted-text)]">{getExcerpt(post, 180)}</p>
     </Link>
   )
@@ -160,7 +160,7 @@ export function EditableHomeHero({ primaryTask, primaryRoute, posts, timeSection
             <div className="flex flex-wrap gap-2">
               {focusItems.slice(0, 3).map((post) => (
                 <Link key={post.id || post.slug} href={postHref(primaryTask, post, primaryRoute)} className="rounded-full bg-[var(--slot4-accent-soft)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-[var(--slot4-page-text)]">
-                  {post.title}
+                  {getDisplayTitle(post)}
                 </Link>
               ))}
             </div>
@@ -266,11 +266,11 @@ export function EditableTimeCollections({ primaryTask, primaryRoute, posts, time
         <div className="grid gap-5">
           {feature ? (
             <Link href={postHref(primaryTask, feature, primaryRoute)} className="group relative overflow-hidden rounded-[2.4rem] border border-black/[0.08] bg-[var(--slot4-dark-bg)] text-white shadow-[0_26px_90px_rgba(75,46,43,0.18)] transition duration-300 hover:-translate-y-1">
-              <img src={getEditablePostImage(feature)} alt={feature.title} className="absolute inset-0 h-full w-full object-cover opacity-60 transition duration-500 group-hover:scale-105" />
+              <img src={getEditablePostImage(feature)} alt={getDisplayTitle(feature)} className="absolute inset-0 h-full w-full object-cover opacity-60 transition duration-500 group-hover:scale-105" />
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(75,46,43,0.05),rgba(75,46,43,0.84))]" />
               <div className="relative z-10 flex min-h-[420px] flex-col justify-end p-7 sm:p-10">
                 <p className="text-[11px] font-black uppercase tracking-[0.26em] text-white/72">Featured bookmark</p>
-                <h3 className="mt-4 max-w-2xl text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl">{feature.title}</h3>
+                <h3 className="mt-4 max-w-2xl text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl">{getDisplayTitle(feature)}</h3>
                 <p className="mt-5 max-w-xl text-sm leading-7 text-white/78">{getExcerpt(feature, 180)}</p>
               </div>
             </Link>
