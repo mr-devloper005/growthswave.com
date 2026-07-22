@@ -63,6 +63,30 @@ const getBody = (post: SitePost) => {
 
 const escapeHtml = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 const safeUrl = (value: string) => (/^https?:\/\//i.test(value) ? value : '#')
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const getKeywordLink = (post: SitePost) => {
+  const content = getContent(post)
+  const postRecord = post as unknown as Record<string, unknown>
+  const [titleKeyword = '', titleDestination = ''] = post.title.split('|').map((part) => part.trim())
+  const titleUrl = /^(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/.*)?$/i.test(titleDestination)
+    ? `https://${titleDestination}`
+    : ''
+  const keyword = ['contentKeyword', 'content_keyword', 'keyword', 'focusKeyword', 'focus_keyword', 'anchorText', 'anchor_text', 'linkText']
+    .map((key) => asText(content[key]) || asText(postRecord[key]))
+    .find(Boolean) || (titleDestination ? titleKeyword : '') || (Array.isArray(post.tags) ? asText(post.tags[0]) : '')
+  const url = ['targetUrl', 'target_url', 'destinationUrl', 'destination_url', 'website', 'url', 'link']
+    .map((key) => asText(content[key]) || asText(postRecord[key]))
+    .find((value) => /^https?:\/\//i.test(value)) || titleUrl
+  return keyword ? { keyword, url } : null
+}
+const linkifyKeyword = (value: string, keywordLink: { keyword: string; url: string } | null) => {
+  if (!keywordLink?.url || !value.toLowerCase().includes(keywordLink.keyword.toLowerCase())) return value
+  const pattern = new RegExp(`(${escapeRegExp(keywordLink.keyword)})`, 'gi')
+  return value.replace(
+    pattern,
+    `<a href="${safeUrl(keywordLink.url)}" target="_blank" rel="nofollow noopener noreferrer" aria-label="Open linked keyword in a new tab" style="color:var(--slot4-accent);font-weight:800;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:0.2em">$1</a>`
+  )
+}
 const linkifyMarkdown = (value: string) => value.replace(/\[([^\]]+)]\((https?:\/\/[^\s)]+)\)/gi, (_match, label, url) => `<a href="${safeUrl(url)}" target="_blank" rel="nofollow noopener noreferrer">${label}</a>`)
 const linkifyText = (value: string) =>
   linkifyMarkdown(value).replace(/(^|[\s(>])((https?:\/\/)[^\s<)]+)/gi, (_match, prefix, url) => `${prefix}<a href="${safeUrl(url)}" target="_blank" rel="nofollow noopener noreferrer">${url}</a>`)
@@ -71,6 +95,8 @@ const hardenLinks = (html: string) =>
     let next = String(attrs).replace(/\s+on\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
     if (!/\starget=/i.test(next)) next += ' target="_blank"'
     if (!/\srel=/i.test(next)) next += ' rel="nofollow noopener noreferrer"'
+    if (!/\sstyle=/i.test(next)) next += ' style="color:var(--slot4-accent);font-weight:800;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:0.2em"'
+    if (!/\saria-label=/i.test(next)) next += ' aria-label="Open linked keyword in a new tab"'
     return `<a ${next}>`
   })
 const sanitizeHtml = (html: string) =>
@@ -83,13 +109,20 @@ const sanitizeHtml = (html: string) =>
       .replace(/(href|src)=(['"])javascript:[\s\S]*?\2/gi, '$1="#"')
   )
 
-const formatPlainText = (raw: string) => {
+const formatPlainText = (raw: string, keywordLink: { keyword: string; url: string } | null = null) => {
   const value = raw.trim()
   if (!value) return ''
-  if (/<[a-z][\s\S]*>/i.test(value)) return sanitizeHtml(linkifyMarkdown(value))
+  if (/<[a-z][\s\S]*>/i.test(value)) {
+    const sanitized = sanitizeHtml(linkifyMarkdown(value))
+    if (!keywordLink?.url || /<a\b/i.test(sanitized)) return sanitized
+    return sanitized
+      .split(/(<[^>]+>)/g)
+      .map((part) => (part.startsWith('<') ? part : linkifyKeyword(part, keywordLink)))
+      .join('')
+  }
   return value
     .split(/\n{2,}/)
-    .map((part) => `<p>${linkifyText(escapeHtml(part).replace(/\n/g, '<br />'))}</p>`)
+    .map((part) => `<p>${linkifyKeyword(linkifyText(escapeHtml(part).replace(/\n/g, '<br />')), keywordLink)}</p>`)
     .join('')
 }
 
@@ -271,7 +304,9 @@ function ImageDetail({ post, related }: { post: SitePost; related: SitePost[] })
 
 function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
   const summary = summaryText(post)
+  const summarySource = asText(post.summary) || getField(post, ['description', 'excerpt'])
   const body = getBody(post)
+  const keywordLink = getKeywordLink(post)
   const showBody = normalizeText(body) && normalizeText(body) !== normalizeText(summary)
   const category = categoryOf(post, 'Bookmark')
   return (
