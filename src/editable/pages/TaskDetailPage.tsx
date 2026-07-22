@@ -45,12 +45,15 @@ const getField = (post: SitePost, keys: string[]) => {
   return ''
 }
 
+const dedupeUrls = (urls: Array<string | null | undefined>): string[] =>
+  Array.from(new Set(urls.map((url) => (typeof url === 'string' ? url.trim() : '')).filter((url) => url.length > 0)))
+
 const getImages = (post: SitePost) => {
   const content = getContent(post)
   const media = Array.isArray(post.media) ? post.media.map((item) => item?.url).filter((url): url is string => typeof url === 'string' && isUrl(url)) : []
   const images = Array.isArray(content.images) ? content.images.filter((url): url is string => typeof url === 'string' && isUrl(url)) : []
   const singleImages = ['image', 'featuredImage', 'thumbnail', 'logo', 'avatar'].map((key) => asText(content[key])).filter((url) => url && isUrl(url))
-  return [...media, ...images, ...singleImages].filter(Boolean).slice(0, 12)
+  return dedupeUrls([...media, ...images, ...singleImages]).filter(Boolean).slice(0, 12)
 }
 
 const getBody = (post: SitePost) => {
@@ -300,7 +303,6 @@ function ImageDetail({ post, related }: { post: SitePost; related: SitePost[] })
 }
 
 function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
-  const content = getContent(post)
   const summary = summaryText(post)
   const summarySource = asText(post.summary) || asText(content.description) || asText(content.excerpt)
   const body = getBody(post)
@@ -323,7 +325,7 @@ function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[]
               {post.publishedAt ? <span className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--slot4-muted-text)]">{new Date(post.publishedAt).toLocaleDateString()}</span> : null}
             </div>
             <h1 className="mt-5 max-w-4xl text-4xl font-black leading-[0.94] tracking-[-0.08em] sm:text-6xl lg:text-7xl">{getDisplayTitle(post)}</h1>
-            {summary ? <div className="article-content mt-6 max-w-3xl text-base leading-8 text-[var(--slot4-muted-text)] sm:text-lg sm:leading-9" dangerouslySetInnerHTML={{ __html: formatPlainText(summarySource || summary, keywordLink) }} /> : null}
+            {summary ? <p className="mt-6 max-w-3xl text-base leading-8 text-[var(--slot4-muted-text)] sm:text-lg sm:leading-9">{summary}</p> : null}
           </article>
 
           <div className="grid content-start gap-6">
@@ -361,7 +363,7 @@ function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[]
               <span className="hidden rounded-full bg-[var(--slot4-gray)] px-4 py-2 text-xs font-black text-[var(--slot4-muted-text)] sm:inline-flex">Curated bookmark</span>
             </div>
             {showBody ? (
-              <div className="article-content mt-7 max-w-none text-base leading-8 text-[var(--slot4-page-text)]/82 sm:text-lg sm:leading-9" dangerouslySetInnerHTML={{ __html: formatPlainText(body, keywordLink) }} />
+              <div className="article-content mt-7 max-w-none text-base leading-8 text-[var(--slot4-page-text)]/82 sm:text-lg sm:leading-9" dangerouslySetInnerHTML={{ __html: formatPlainText(body) }} />
             ) : (
               <div className="mt-7 rounded-[1.6rem] border border-dashed border-black/[0.08] bg-[var(--slot4-gray)] p-6 text-base leading-8 text-[var(--slot4-muted-text)]">
                 No additional description is available for this bookmark yet.
