@@ -304,7 +304,7 @@ function ImageDetail({ post, related }: { post: SitePost; related: SitePost[] })
 
 function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[] }) {
   const summary = summaryText(post)
-  const summarySource = asText(post.summary) || asText(content.description) || asText(content.excerpt)
+  const summarySource = asText(post.summary) || getField(post, ['description', 'excerpt'])
   const body = getBody(post)
   const keywordLink = getKeywordLink(post)
   const showBody = normalizeText(body) && normalizeText(body) !== normalizeText(summary)
