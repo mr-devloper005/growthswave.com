@@ -181,7 +181,6 @@ function ArticleDetail({ task, post, related, comments }: { task: TaskKey; post:
         <BackLink task="article" />
         <div className="mt-8 flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-[var(--detail-accent)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-white">{category}</span>
-          {post.publishedAt ? <span className="text-xs font-black uppercase tracking-[0.18em] text-[var(--detail-text)]/55">{new Date(post.publishedAt).toLocaleDateString()}</span> : null}
         </div>
         <h1 className="mt-4 text-4xl font-black leading-[0.96] tracking-[-0.08em] sm:text-5xl lg:text-7xl">{getDisplayTitle(post)}</h1>
         {summaryText(post) ? <p className="mt-5 max-w-3xl text-lg leading-8 text-[var(--detail-text)]/72">{summaryText(post)}</p> : null}
@@ -322,7 +321,6 @@ function BookmarkDetail({ post, related }: { post: SitePost; related: SitePost[]
             <BackLink task="sbm" />
             <div className="mt-8 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-[var(--slot4-accent-soft)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--slot4-page-text)]">{category}</span>
-              {post.publishedAt ? <span className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--slot4-muted-text)]">{new Date(post.publishedAt).toLocaleDateString()}</span> : null}
             </div>
             <h1 className="mt-5 max-w-4xl text-4xl font-black leading-[0.94] tracking-[-0.08em] sm:text-6xl lg:text-7xl">{getDisplayTitle(post)}</h1>
             {summary ? <div className="article-content mt-6 max-w-3xl text-base leading-8 text-[var(--slot4-muted-text)] sm:text-lg sm:leading-9" dangerouslySetInnerHTML={{ __html: formatPlainText(summarySource || summary, keywordLink) }} /> : null}
@@ -519,7 +517,6 @@ function RelatedPanel({ task, post, related, compact = false }: { task: TaskKey;
             <p className="inline-flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" /> Site: {SITE_CONFIG.name}
             </p>
-            {post.publishedAt ? <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p> : null}
           </div>
         </div>
       ) : null}
